@@ -24,6 +24,7 @@ public:
 
 	Logger* GetLogger() const;
 	ImageManager* GetImageManager() const;
+	sf::RenderWindow* GetRenderWindow() const;
 private:
 	Logger *logger;
 	ImageManager *imgMngr;

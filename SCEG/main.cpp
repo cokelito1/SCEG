@@ -5,7 +5,7 @@ int main() {
 	SCEG::Engine *eng = new SCEG::Engine();
 	eng->run();
 	delete eng;
-#ifdef DEBUG
+#ifdef DEBUG && _WIN32
 	system("pause");
 #endif
 

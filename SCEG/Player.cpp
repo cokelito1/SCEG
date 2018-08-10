@@ -25,7 +25,7 @@ namespace SCEG {
 			}
 			break;
 		case SCEG::Entity::MovementTo::MOV_SUR:
-			if ((sprite.getPosition().y + texture.getSize().y) + 1.0f < 600.0f) { 
+			if ((sprite.getPosition().y + texture.getSize().y) + 1.0f < engine->GetRenderWindow()->getSize().y) { 
 				sprite.move(0, velocity * engine->GetDelta());
 			}
 			break;

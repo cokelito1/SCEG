@@ -3,6 +3,8 @@
 #include "SCEG.h"
 #include "Player.h"
 
+#include <SFML/Audio.hpp>
+
 #include <string.h>
 
 namespace SCEG {
@@ -64,11 +66,17 @@ namespace SCEG {
 		sf::Text P1ScoreText;
 		sf::Text P2ScoreText;
 
+		sf::Sound pongSound;
+		sf::SoundBuffer pongSoundBuffer;
+
+		pongSoundBuffer.loadFromFile("pong.wav");
+		pongSound.setBuffer(pongSoundBuffer);
+
 		P1ScoreText.setFont(font);
 		P2ScoreText.setFont(font);
 
 		P1ScoreText.setPosition(100, 0);
-		P2ScoreText.setPosition(700, 0);
+		P2ScoreText.setPosition(window->getSize().x - 100, 0);
 
 		P1ScoreText.setCharacterSize(32);
 		P2ScoreText.setCharacterSize(32);
@@ -102,7 +110,9 @@ namespace SCEG {
 
 		std::random_device rd;
 		std::default_random_engine gen(rd());
+
 		std::uniform_int_distribution<int> dist(1, 3);
+		std::uniform_int_distribution<int> distF(15, 30);
 
 		entitys["Player"]->SetPosition(sf::Vector2f(0, (window->getSize().y / 2) - (entitys["Player"]->GetSprite().getTexture()->getSize().y / 2)));
 		entitys["p2"]->SetPosition(sf::Vector2f(window->getSize().x - entitys["p2"]->GetSprite().getTexture()->getSize().x, (window->getSize().y / 2) - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2)));
@@ -137,12 +147,13 @@ namespace SCEG {
 					ballTo = Entity::MovementTo::MOV_SURESTE;
 					break;
 				case 2:
-					//ballTo = Entity::MovementTo::MOV_ESTE;
+					ballTo = Entity::MovementTo::MOV_ESTE;
 					break;
 				case 3:
 					ballTo = Entity::MovementTo::MOV_NORESTE;
 					break;
 				}
+				pongSound.play();
 				entitys["ball"]->SetVelocity(entitys["ball"]->GetVelocity() + 20.0f);
 			}
 			else if (entitys["p2"]->intersects(entitys["ball"])) {
@@ -152,16 +163,17 @@ namespace SCEG {
 					ballTo = Entity::MovementTo::MOV_SUROESTE;
 					break;
 				case 2:
-					//ballTo = Entity::MovementTo::MOV_OESTE;
+					ballTo = Entity::MovementTo::MOV_OESTE;
 					break;
 				case 3:
 					ballTo = Entity::MovementTo::MOV_NOROESTE;
 					break;
 				}
-				entitys["ball"]->SetVelocity(entitys["ball"]->GetVelocity() + 20.0f);
+				pongSound.play();
+				entitys["ball"]->SetVelocity(entitys["ball"]->GetVelocity() + 20.0f + distF(gen));
 			}
 
-			if ((entitys["ball"]->GetPosition().y + entitys["ball"]->GetSprite().getTexture()->getSize().y / 2) + 1.0f > 600.0f || entitys["ball"]->GetPosition().y - 1.0f < 0.0f) {
+			if ((entitys["ball"]->GetPosition().y + entitys["ball"]->GetSprite().getTexture()->getSize().y / 2) + 1.0f > window->getSize().y || entitys["ball"]->GetPosition().y - 1.0f < 0.0f) {
 				switch (ballTo)
 				{
 				case SCEG::Entity::MovementTo::MOV_NORESTE:
@@ -179,9 +191,10 @@ namespace SCEG {
 				default:
 					break;
 				}
+				pongSound.play();
 			}
 
-			if ((entitys["ball"]->GetPosition().x - entitys["ball"]->GetSprite().getTexture()->getSize().x) + 1.0f > 800.0f) {
+			if ((entitys["ball"]->GetPosition().x - entitys["ball"]->GetSprite().getTexture()->getSize().x) + 1.0f > window->getSize().x) {
 				*logger << Logger::LogType::LOG_DEBUG << "Score p1\n";
 				PlayerOneScore++;
 				entitys["ball"]->SetPosition(sf::Vector2f((window->getSize().x / 2) - (ball->GetSprite().getTexture()->getSize().x / 4), (window->getSize().y / 2) - (ball->GetSprite().getTexture()->getSize().y / 4)));
@@ -217,13 +230,18 @@ namespace SCEG {
 				entitys["p2"]->Move(Entity::MovementTo::MOV_NORTE);
 			}
 
-			window->clear(sf::Color::Black);
-			window->draw(P1ScoreText);
-			window->draw(P2ScoreText);
-			for (auto it : entitys) {
-				it.second->draw(window);
+			if(PlayerOneScore < 10 || PlayerTwoScore <= 10) {
+				window->clear(sf::Color::Black);
+				window->draw(P1ScoreText);
+				window->draw(P2ScoreText);
+				for (auto it : entitys) {
+					it.second->draw(window);
+				}
+				window->display();
+			} else {
+				window->clear(sf::Color::Red);
+				pongSound.play();
 			}
-			window->display();
 		}
 	}
 	
@@ -237,5 +255,9 @@ namespace SCEG {
 
 	ImageManager* Engine::GetImageManager() const {
 		return imgMngr;
+	}
+
+	sf::RenderWindow* Engine::GetRenderWindow() const {
+		return window;
 	}
 }
