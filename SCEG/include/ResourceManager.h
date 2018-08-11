@@ -1,7 +1,9 @@
 #pragma once
 
 #include <map>
+#include <vector>
 #include <string>
+#include <sstream>
 
 #include "SCEG.h"
 #include "Logger.h"
@@ -16,6 +18,16 @@ namespace SCEG {
 		}
 		~ResourceManager() { }
 
+		void AddResourceDirectory(const std::string& DirName) {
+			for(std::vector<std::string>::const_iterator it = ResourcesDirectories.begin(); it != ResourcesDirectories.end(); it++) {
+				if((*it) == DirName) {
+					return;
+				}
+			}
+
+			ResourcesDirectories.push_back(DirName);
+		}
+
 		const T& GetResource(const std::string& FileName) {
 			for (typename std::map<std::string, T>::const_iterator it = Resources.begin(); it != Resources.end(); it++) {
 				if (it->first == FileName) {
@@ -25,14 +37,26 @@ namespace SCEG {
 			}
 
 			T resource;
+			std::streambuf *previous = sf::err().rdbuf(NULL);
 			if (resource.loadFromFile(FileName)) {
 				Resources[FileName] = resource;
 				(*logger) << Logger::LogType::LOG_DEBUG << "Cargando desde disco: " << FileName << "\n";
+				sf::err().rdbuf(previous);
 				return Resources[FileName];
+			}
+
+			for(std::vector<std::string>::const_iterator it = ResourcesDirectories.begin(); it != ResourcesDirectories.end(); it++) {
+				if(resource.loadFromFile((*it) + FileName)) {
+					Resources[FileName] = resource;
+					(*logger) << Logger::LogType::LOG_DEBUG << "Cargando desde disco: " << FileName << "\n";
+					sf::err().rdbuf(previous);
+					return Resources[FileName];
+				}
 			}
 
 			(*logger) << Logger::LogType::LOG_ERROR << "Error al cargar archivo: " << FileName << "\n";
 			Resources[FileName] = resource;
+			sf::err().rdbuf(previous);
 			return Resources[FileName];
 		}
 
@@ -41,5 +65,6 @@ namespace SCEG {
 		Logger *logger;
 
 		std::map<std::string, T> Resources;
+		std::vector<std::string> ResourcesDirectories;
 	};
 }

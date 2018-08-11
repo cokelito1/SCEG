@@ -11,10 +11,18 @@
 namespace SCEG {
 	Engine::Engine() {
 		logger = new Logger("0.0.1");
+
 		imgMngr = new ResourceManager<sf::Image>(this);
 		soundMngr = new ResourceManager<sf::SoundBuffer>(this);
+		fontMngr = new ResourceManager<sf::Font>(this);
+
+		imgMngr->AddResourceDirectory("media/images/");
+		soundMngr->AddResourceDirectory("media/sounds/");
+		fontMngr->AddResourceDirectory("media/fonts/");
+
 		window = new sf::RenderWindow(sf::VideoMode(800, 600), "hello");
 		window->setVerticalSyncEnabled(true);
+		window->setIcon(imgMngr->GetResource("ball.png").getSize().x, imgMngr->GetResource("ball.png").getSize().y, imgMngr->GetResource("ball.png").getPixelsPtr());
 		state = GameState::GAME_SELECT;
 
 		(*logger) << Logger::LogType::LOG_INFO << "Engine Iniciado\n";
@@ -23,6 +31,7 @@ namespace SCEG {
 	Engine::~Engine() {
 		delete imgMngr;
 		delete soundMngr;
+		delete fontMngr;
 		for (auto i : entitys) {
 			(*logger) << Logger::LogType::LOG_DEBUG <<"Entidad de registrada: " << i.second->GetName().c_str() << "\n";
 			delete i.second;
@@ -63,8 +72,7 @@ namespace SCEG {
 		int PlayerOneScore = 0;
 		int PlayerTwoScore = 0;
 
-		sf::Font font;
-		font.loadFromFile("./font.ttf");
+		sf::Font font = fontMngr->GetResource("font.ttf");
 
 		sf::Text P1ScoreText;
 		sf::Text P2ScoreText;
@@ -73,7 +81,7 @@ namespace SCEG {
 		pongSound.setBuffer(soundMngr->GetResource("pong.wav"));
 
 		sf::Music oofSong;
-		oofSong.openFromFile("oofSong.wav");
+		oofSong.openFromFile("media/sounds/oofSong.wav");
 
 		P1ScoreText.setFont(font);
 		P2ScoreText.setFont(font);

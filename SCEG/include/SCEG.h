@@ -33,8 +33,10 @@ public:
 	sf::RenderWindow* GetRenderWindow() const;
 private:
 	Logger *logger;
+
 	ResourceManager<sf::Image> *imgMngr;
 	ResourceManager<sf::SoundBuffer> *soundMngr;
+	ResourceManager<sf::Font> *fontMngr;
 
 	GameState state;
 	bool bot = false;
