@@ -15,7 +15,7 @@ class ResourceManager;
 
 class Engine {
 public:
-	enum class GameState {GAME_PLAYING, GAME_LOSE_SCREEN};
+	enum class GameState {GAME_PLAYING, GAME_LOSE_SCREEN, GAME_SELECT};
 
 	Engine();
 	~Engine();
@@ -37,6 +37,7 @@ private:
 	ResourceManager<sf::SoundBuffer> *soundMngr;
 
 	GameState state;
+	bool bot = false;
 
 	sf::RenderWindow *window;
 

@@ -15,7 +15,7 @@ namespace SCEG {
 		soundMngr = new ResourceManager<sf::SoundBuffer>(this);
 		window = new sf::RenderWindow(sf::VideoMode(800, 600), "hello");
 		window->setVerticalSyncEnabled(true);
-		state = GameState::GAME_PLAYING;
+		state = GameState::GAME_SELECT;
 
 		(*logger) << Logger::LogType::LOG_INFO << "Engine Iniciado\n";
 	}
@@ -99,9 +99,7 @@ namespace SCEG {
 		p2->SetPosition(sf::Vector2f(window->getSize().x - p2->GetSprite().getTexture()->getSize().x, 0.0f));
 		p2->SetName("p2");
 		p2->SetVelocity(440.0f);
-#ifdef BOT
 		p2->SetMoving(true);
-#endif
 		p2->RegisterSprite();
 
 		Player *ball = new Player(this);
@@ -131,6 +129,38 @@ namespace SCEG {
 		while (window->isOpen()) {
 			deltaTime = delta.restart();
 			sf::Event evt;
+			sf::Text t;
+			t.setFont(font);
+			t.setCharacterSize(100);
+			t.setString("K for bot\nL for 2 players");
+			if (state == GameState::GAME_SELECT) {
+				while (window->pollEvent(evt)) {
+					switch (evt.type) {
+					case sf::Event::KeyPressed:
+						if (evt.key.code == sf::Keyboard::K) {
+							bot = true;
+							(*logger) << Logger::LogType::LOG_DEBUG << "Seleccionado modo bot\n";
+							entitys["p2"]->SetMoving(true);
+							entitys["Player"]->SetMoving(false);
+							state = GameState::GAME_PLAYING;
+						}
+						if (evt.key.code == sf::Keyboard::L) {
+							bot = false;
+							(*logger) << Logger::LogType::LOG_DEBUG << "Seleccionado modo 2 players\n";
+							entitys["p2"]->SetMoving(false);
+							entitys["Player"]->SetMoving(false);
+							state = GameState::GAME_PLAYING;
+						}
+						break;
+					case sf::Event::Closed:
+						window->close();
+						break;
+					}
+				}
+				window->clear(sf::Color::Black);
+				window->draw(t);
+				window->display();
+			}
 			if (state == GameState::GAME_PLAYING) {
 				while (window->pollEvent(evt)) {
 					switch (evt.type) {
@@ -146,36 +176,36 @@ namespace SCEG {
 							entitys["Player"]->SetMoving(true);
 							PjMoveTo = Entity::MovementTo::MOV_SUR;
 						}
-#ifndef BOT
-						if (evt.key.code == sf::Keyboard::Up) {
-							entitys["p2"]->SetMoving(true);
-							Pj2MoveTo = Entity::MovementTo::MOV_NORTE;
-						}
+						if (!bot) {
+							if (evt.key.code == sf::Keyboard::Up) {
+								entitys["p2"]->SetMoving(true);
+								Pj2MoveTo = Entity::MovementTo::MOV_NORTE;
+							}
 
-						if (evt.key.code == sf::Keyboard::Down) {
-							entitys["p2"]->SetMoving(true);
-							Pj2MoveTo = Entity::MovementTo::MOV_SUR;
+							if (evt.key.code == sf::Keyboard::Down) {
+								entitys["p2"]->SetMoving(true);
+								Pj2MoveTo = Entity::MovementTo::MOV_SUR;
+							}
 						}
-#endif
 						break;
 					case sf::Event::KeyReleased:
 						if (evt.key.code == sf::Keyboard::W || evt.key.code == sf::Keyboard::S) {
 							entitys["Player"]->SetMoving(false);
 						}
-#ifndef BOT
-						if (evt.key.code == sf::Keyboard::Up || evt.key.code == sf::Keyboard::Down) {
-							entitys["p2"]->SetMoving(false);
+						if (!bot) {
+							if (evt.key.code == sf::Keyboard::Up || evt.key.code == sf::Keyboard::Down) {
+								entitys["p2"]->SetMoving(false);
+							}
 						}
-#endif
 					default:
 						break;
 					}
 				}
 
 				entitys["Player"]->Move(PjMoveTo);
-#ifndef BOT
-				entitys["p2"]->Move(Pj2MoveTo);
-#endif
+				if (!bot) {
+					entitys["p2"]->Move(Pj2MoveTo);
+				}
 
 				entitys["ball"]->Move(ballTo);
 				if (entitys["Player"]->intersects(entitys["ball"])) {
@@ -261,14 +291,14 @@ namespace SCEG {
 					P2ScoreText.setString(std::to_string(PlayerTwoScore));
 				}
 
-#ifdef BOT
-				if (entitys["p2"]->GetPosition().y + (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2) < entitys["ball"]->GetPosition().y) {
-					entitys["p2"]->Move(Entity::MovementTo::MOV_SUR);
+				if (bot) {
+					if (entitys["p2"]->GetPosition().y + (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2) < entitys["ball"]->GetPosition().y) {
+						entitys["p2"]->Move(Entity::MovementTo::MOV_SUR);
+					}
+					else if (entitys["p2"]->GetPosition().y - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2) > entitys["ball"]->GetPosition().y) {
+						entitys["p2"]->Move(Entity::MovementTo::MOV_NORTE);
+					}
 				}
-				else if (entitys["p2"]->GetPosition().y - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2) > entitys["ball"]->GetPosition().y) {
-					entitys["p2"]->Move(Entity::MovementTo::MOV_NORTE);
-				}
-#endif
 				if (PlayerOneScore < 10 && PlayerTwoScore < 10) {
 					window->clear(sf::Color::Black);
 					window->draw(P1ScoreText);
@@ -288,10 +318,29 @@ namespace SCEG {
 					case sf::Event::Closed:
 							window->close();
 							break;
+					case sf::Event::KeyPressed:
+						if (evt.key.code == sf::Keyboard::Space) {
+							if (oofSong.getStatus() == sf::Music::Status::Playing) {
+								oofSong.stop();
+							}
+							entitys["ball"]->SetPosition(sf::Vector2f((window->getSize().x / 2) - (ball->GetSprite().getTexture()->getSize().x / 4), (window->getSize().y / 2) - (ball->GetSprite().getTexture()->getSize().y / 4)));
+							entitys["Player"]->SetPosition(sf::Vector2f(0, (window->getSize().y / 2) - (entitys["Player"]->GetSprite().getTexture()->getSize().y / 2)));
+							entitys["p2"]->SetPosition(sf::Vector2f(window->getSize().x - entitys["p2"]->GetSprite().getTexture()->getSize().x, (window->getSize().y / 2) - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2)));
+							entitys["Player"]->SetVelocity(440.0f);
+							entitys["p2"]->SetVelocity(440.0f);
+							entitys["ball"]->SetVelocity(200.0f);
+							std::random_device rd;
+							gen.seed(rd());
+							PlayerOneScore = 0;
+							PlayerTwoScore = 0;
+							P1ScoreText.setString(std::to_string(PlayerOneScore));
+							P2ScoreText.setString(std::to_string(PlayerTwoScore));
+							state = GameState::GAME_SELECT;
+						}
 					}
 				}
 				window->clear(sf::Color::Red);
-				if (oofSong.getStatus() != sf::Music::Status::Playing) {
+				if (oofSong.getStatus() != sf::Music::Status::Playing && state == GameState::GAME_LOSE_SCREEN) {
 					oofSong.play();
 					(*logger) << Logger::LogType::LOG_DEBUG << "Playing song oofSong\n";
 				}
