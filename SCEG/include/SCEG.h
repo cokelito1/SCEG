@@ -21,17 +21,18 @@ public:
 	virtual ~Engine();
 
 	void RegisterEntity(const std::string& name, Entity *ent);
-	virtual void run();
-
+	
 	void UnregisterEntity(const std::string& name);
 	void UnregisterEntity(Entity *ent);
 
-	float GetDelta();
+	virtual void run() = 0;
 
+	float GetDelta();
 	Logger* GetLogger() const;
 	ResourceManager<sf::Image>* GetImageManager() const;
 	sf::RenderWindow* GetRenderWindow() const;
-private:
+
+protected:
 	Logger *logger;
 
 	ResourceManager<sf::Image> *imgMngr;

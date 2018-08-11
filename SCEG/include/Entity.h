@@ -9,9 +9,6 @@
 #include "Logger.h"
 
 namespace SCEG {
-
-class Engine;
-
 class Entity {
 public:
 	enum class MovementTo {MOV_NORTE, MOV_SUR, MOV_ESTE, MOV_OESTE, MOV_NORESTE, MOV_NOROESTE, MOV_SURESTE, MOV_SUROESTE};
@@ -28,19 +25,21 @@ public:
 	}
 
 	virtual void Move(MovementTo direction) = 0;
-	virtual void SetPosition(sf::Vector2f Pos) = 0;
+	
 	virtual void RegisterSprite() = 0;
+
+	virtual void SetPosition(sf::Vector2f Pos) = 0;
 	virtual void SetMoving(bool moving) { this->moving = moving; }
+	virtual void SetVelocity(float velocity) { this->velocity = velocity; }
+
 	virtual void draw(sf::RenderWindow *window) = 0;
 	virtual bool intersects(Entity *ent) = 0;
-
-	virtual void SetVelocity(float velocity) { this->velocity = velocity; }
+	
 	virtual float GetVelocity() { return velocity; }
-
 	virtual std::string GetName() const = 0;
-
 	virtual sf::Vector2f GetPosition() const = 0;
 	virtual sf::Sprite& GetSprite() { return sprite; };
+
 protected:
 	sf::Sprite sprite;
 	sf::Texture texture;
