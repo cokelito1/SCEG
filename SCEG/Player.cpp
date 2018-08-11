@@ -18,37 +18,39 @@ namespace SCEG {
 	}
 
 	void Player::Move(Entity::MovementTo direction) {
-		switch (direction) {
-		case SCEG::Entity::MovementTo::MOV_NORTE:
-			if (sprite.getPosition().y - 1.0f > 0.0f) {
-				sprite.move(0, -(velocity * engine->GetDelta()));
+		if (moving) {
+			switch (direction) {
+			case SCEG::Entity::MovementTo::MOV_NORTE:
+				if (sprite.getPosition().y - 1.0f > 0.0f) {
+					sprite.move(0, -(velocity * engine->GetDelta()));
+				}
+				break;
+			case SCEG::Entity::MovementTo::MOV_SUR:
+				if ((sprite.getPosition().y + texture.getSize().y) + 1.0f < engine->GetRenderWindow()->getSize().y) {
+					sprite.move(0, velocity * engine->GetDelta());
+				}
+				break;
+			case SCEG::Entity::MovementTo::MOV_ESTE:
+				sprite.move(velocity * engine->GetDelta(), 0);
+				break;
+			case SCEG::Entity::MovementTo::MOV_OESTE:
+				sprite.move(-(velocity * engine->GetDelta()), 0);
+				break;
+			case SCEG::Entity::MovementTo::MOV_NORESTE:
+				sprite.move(velocity * engine->GetDelta(), -(velocity * engine->GetDelta()));
+				break;
+			case SCEG::Entity::MovementTo::MOV_NOROESTE:
+				sprite.move(-(velocity * engine->GetDelta()), -(velocity * engine->GetDelta()));
+				break;
+			case SCEG::Entity::MovementTo::MOV_SURESTE:
+				sprite.move(velocity * engine->GetDelta(), velocity * engine->GetDelta());
+				break;
+			case SCEG::Entity::MovementTo::MOV_SUROESTE:
+				sprite.move(-(velocity * engine->GetDelta()), velocity * engine->GetDelta());
+				break;
+			default:
+				break;
 			}
-			break;
-		case SCEG::Entity::MovementTo::MOV_SUR:
-			if ((sprite.getPosition().y + texture.getSize().y) + 1.0f < engine->GetRenderWindow()->getSize().y) { 
-				sprite.move(0, velocity * engine->GetDelta());
-			}
-			break;
-		case SCEG::Entity::MovementTo::MOV_ESTE:
-			sprite.move(velocity * engine->GetDelta(), 0);
-			break;
-		case SCEG::Entity::MovementTo::MOV_OESTE:
-			sprite.move(-(velocity * engine->GetDelta()), 0);
-			break;
-		case SCEG::Entity::MovementTo::MOV_NORESTE:
-			sprite.move(velocity * engine->GetDelta(), -(velocity * engine->GetDelta()));
-			break;
-		case SCEG::Entity::MovementTo::MOV_NOROESTE:
-			sprite.move(-(velocity * engine->GetDelta()), -(velocity * engine->GetDelta()));
-			break;
-		case SCEG::Entity::MovementTo::MOV_SURESTE:
-			sprite.move(velocity * engine->GetDelta(), velocity * engine->GetDelta());
-			break;
-		case SCEG::Entity::MovementTo::MOV_SUROESTE:
-			sprite.move(-(velocity * engine->GetDelta()), velocity * engine->GetDelta());
-			break;
-		default:
-			break;
 		}
 	}
 

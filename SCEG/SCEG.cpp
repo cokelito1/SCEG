@@ -15,6 +15,7 @@ namespace SCEG {
 		soundMngr = new ResourceManager<sf::SoundBuffer>(this);
 		window = new sf::RenderWindow(sf::VideoMode(800, 600), "hello");
 		window->setVerticalSyncEnabled(true);
+		state = GameState::GAME_PLAYING;
 
 		(*logger) << Logger::LogType::LOG_INFO << "Engine Iniciado\n";
 	}
@@ -71,6 +72,9 @@ namespace SCEG {
 		sf::Sound pongSound;
 		pongSound.setBuffer(soundMngr->GetResource("pong.wav"));
 
+		sf::Music oofSong;
+		oofSong.openFromFile("oofSong.wav");
+
 		P1ScoreText.setFont(font);
 		P2ScoreText.setFont(font);
 
@@ -94,7 +98,10 @@ namespace SCEG {
 		p2->SetImage(imgMngr->GetResource("rectangle.png"));
 		p2->SetPosition(sf::Vector2f(window->getSize().x - p2->GetSprite().getTexture()->getSize().x, 0.0f));
 		p2->SetName("p2");
-		p2->SetVelocity(400.0f);
+		p2->SetVelocity(440.0f);
+#ifdef BOT
+		p2->SetMoving(true);
+#endif
 		p2->RegisterSprite();
 
 		Player *ball = new Player(this);
@@ -103,6 +110,7 @@ namespace SCEG {
 		ball->SetName("ball");
 		ball->SetPosition(sf::Vector2f((window->getSize().x / 2) - (ball->GetSprite().getTexture()->getSize().x / 4), (window->getSize().y / 2) - (ball->GetSprite().getTexture()->getSize().y / 4)));
 		ball->SetVelocity(200.0f);
+		ball->SetMoving(true);
 		ball->RegisterSprite();
 
 		Entity::MovementTo ballTo = Entity::MovementTo::MOV_OESTE;
@@ -116,130 +124,178 @@ namespace SCEG {
 		entitys["Player"]->SetPosition(sf::Vector2f(0, (window->getSize().y / 2) - (entitys["Player"]->GetSprite().getTexture()->getSize().y / 2)));
 		entitys["p2"]->SetPosition(sf::Vector2f(window->getSize().x - entitys["p2"]->GetSprite().getTexture()->getSize().x, (window->getSize().y / 2) - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2)));
 
+		Entity::MovementTo PjMoveTo = Entity::MovementTo::MOV_SUR;
+		Entity::MovementTo Pj2MoveTo = Entity::MovementTo::MOV_SUR;
+
 		delta.restart();
 		while (window->isOpen()) {
 			deltaTime = delta.restart();
 			sf::Event evt;
-			while (window->pollEvent(evt)) {
-				switch (evt.type) {
-				case sf::Event::Closed:
-					window->close();
-					break;
-				case sf::Event::KeyPressed:
-					if (evt.key.code == sf::Keyboard::W) {
-						entitys["Player"]->Move(Entity::MovementTo::MOV_NORTE);
+			if (state == GameState::GAME_PLAYING) {
+				while (window->pollEvent(evt)) {
+					switch (evt.type) {
+					case sf::Event::Closed:
+						window->close();
+						break;
+					case sf::Event::KeyPressed:
+						if (evt.key.code == sf::Keyboard::W) {
+							entitys["Player"]->SetMoving(true);
+							PjMoveTo = Entity::MovementTo::MOV_NORTE;
+						}
+						if (evt.key.code == sf::Keyboard::S) {
+							entitys["Player"]->SetMoving(true);
+							PjMoveTo = Entity::MovementTo::MOV_SUR;
+						}
+#ifndef BOT
+						if (evt.key.code == sf::Keyboard::Up) {
+							entitys["p2"]->SetMoving(true);
+							Pj2MoveTo = Entity::MovementTo::MOV_NORTE;
+						}
+
+						if (evt.key.code == sf::Keyboard::Down) {
+							entitys["p2"]->SetMoving(true);
+							Pj2MoveTo = Entity::MovementTo::MOV_SUR;
+						}
+#endif
+						break;
+					case sf::Event::KeyReleased:
+						if (evt.key.code == sf::Keyboard::W || evt.key.code == sf::Keyboard::S) {
+							entitys["Player"]->SetMoving(false);
+						}
+#ifndef BOT
+						if (evt.key.code == sf::Keyboard::Up || evt.key.code == sf::Keyboard::Down) {
+							entitys["p2"]->SetMoving(false);
+						}
+#endif
+					default:
+						break;
 					}
-					if (evt.key.code == sf::Keyboard::S) {
-						entitys["Player"]->Move(Entity::MovementTo::MOV_SUR);
+				}
+
+				entitys["Player"]->Move(PjMoveTo);
+#ifndef BOT
+				entitys["p2"]->Move(Pj2MoveTo);
+#endif
+
+				entitys["ball"]->Move(ballTo);
+				if (entitys["Player"]->intersects(entitys["ball"])) {
+					int sel = dist(gen);
+					switch (sel) {
+					case 1:
+						ballTo = Entity::MovementTo::MOV_SURESTE;
+						break;
+					case 2:
+						ballTo = Entity::MovementTo::MOV_ESTE;
+						break;
+					case 3:
+						ballTo = Entity::MovementTo::MOV_NORESTE;
+						break;
 					}
-					break;
-				default:
-					break;
+					pongSound.play();
+					entitys["ball"]->SetVelocity(entitys["ball"]->GetVelocity() + 20.0f);
+				}
+				else if (entitys["p2"]->intersects(entitys["ball"])) {
+					int sel = dist(gen);
+					switch (sel) {
+					case 1:
+						ballTo = Entity::MovementTo::MOV_SUROESTE;
+						break;
+					case 2:
+						ballTo = Entity::MovementTo::MOV_OESTE;
+						break;
+					case 3:
+						ballTo = Entity::MovementTo::MOV_NOROESTE;
+						break;
+					}
+					pongSound.play();
+					entitys["ball"]->SetVelocity(entitys["ball"]->GetVelocity() + 20.0f + distF(gen));
+				}
+
+				if ((entitys["ball"]->GetPosition().y + entitys["ball"]->GetSprite().getTexture()->getSize().y / 2) + 1.0f > window->getSize().y || entitys["ball"]->GetPosition().y - 1.0f < 0.0f) {
+					switch (ballTo)
+					{
+					case SCEG::Entity::MovementTo::MOV_NORESTE:
+						ballTo = Entity::MovementTo::MOV_SURESTE;
+						break;
+					case SCEG::Entity::MovementTo::MOV_NOROESTE:
+						ballTo = Entity::MovementTo::MOV_SUROESTE;
+						break;
+					case SCEG::Entity::MovementTo::MOV_SURESTE:
+						ballTo = Entity::MovementTo::MOV_NORESTE;
+						break;
+					case SCEG::Entity::MovementTo::MOV_SUROESTE:
+						ballTo = Entity::MovementTo::MOV_NOROESTE;
+						break;
+					default:
+						break;
+					}
+					pongSound.play();
+				}
+
+				if ((entitys["ball"]->GetPosition().x - entitys["ball"]->GetSprite().getTexture()->getSize().x) + 1.0f > window->getSize().x) {
+					*logger << Logger::LogType::LOG_DEBUG << "Score p1\n";
+					PlayerOneScore++;
+					entitys["ball"]->SetPosition(sf::Vector2f((window->getSize().x / 2) - (ball->GetSprite().getTexture()->getSize().x / 4), (window->getSize().y / 2) - (ball->GetSprite().getTexture()->getSize().y / 4)));
+					entitys["Player"]->SetPosition(sf::Vector2f(0, (window->getSize().y / 2) - (entitys["Player"]->GetSprite().getTexture()->getSize().y / 2)));
+					entitys["p2"]->SetPosition(sf::Vector2f(window->getSize().x - entitys["p2"]->GetSprite().getTexture()->getSize().x, (window->getSize().y / 2) - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2)));
+					entitys["Player"]->SetVelocity(440.0f);
+					entitys["p2"]->SetVelocity(440.0f);
+					entitys["ball"]->SetVelocity(200.0f);
+					std::random_device rd;
+					gen.seed(rd());
+					P1ScoreText.setString(std::to_string(PlayerOneScore));
+					P2ScoreText.setString(std::to_string(PlayerTwoScore));
+				}
+				else if ((entitys["ball"]->GetPosition().x + entitys["ball"]->GetSprite().getTexture()->getSize().x) - 1.0f < 0.0f) {
+					*logger << Logger::LogType::LOG_DEBUG << "Score p2\n";
+					PlayerTwoScore++;
+					entitys["ball"]->SetPosition(sf::Vector2f((window->getSize().x / 2) - (ball->GetSprite().getTexture()->getSize().x / 4), (window->getSize().y / 2) - (ball->GetSprite().getTexture()->getSize().y / 4)));
+					entitys["Player"]->SetPosition(sf::Vector2f(0, (window->getSize().y / 2) - (entitys["Player"]->GetSprite().getTexture()->getSize().y / 2)));
+					entitys["p2"]->SetPosition(sf::Vector2f(window->getSize().x - entitys["p2"]->GetSprite().getTexture()->getSize().x, (window->getSize().y / 2) - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2)));
+					entitys["Player"]->SetVelocity(440.0f);
+					entitys["p2"]->SetVelocity(440.0f);
+					entitys["ball"]->SetVelocity(200.0f);
+					std::random_device rd;
+					gen.seed(rd());
+					P1ScoreText.setString(std::to_string(PlayerOneScore));
+					P2ScoreText.setString(std::to_string(PlayerTwoScore));
+				}
+
+#ifdef BOT
+				if (entitys["p2"]->GetPosition().y + (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2) < entitys["ball"]->GetPosition().y) {
+					entitys["p2"]->Move(Entity::MovementTo::MOV_SUR);
+				}
+				else if (entitys["p2"]->GetPosition().y - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2) > entitys["ball"]->GetPosition().y) {
+					entitys["p2"]->Move(Entity::MovementTo::MOV_NORTE);
+				}
+#endif
+				if (PlayerOneScore < 10 && PlayerTwoScore < 10) {
+					window->clear(sf::Color::Black);
+					window->draw(P1ScoreText);
+					window->draw(P2ScoreText);
+					for (auto it : entitys) {
+						it.second->draw(window);
+					}
+					window->display();
+				}
+				else {
+					state = GameState::GAME_LOSE_SCREEN;
 				}
 			}
-
-			entitys["ball"]->Move(ballTo);
-			if (entitys["Player"]->intersects(entitys["ball"])) {
-				int sel = dist(gen);
-				switch (sel) {
-				case 1:
-					ballTo = Entity::MovementTo::MOV_SURESTE;
-					break;
-				case 2:
-					ballTo = Entity::MovementTo::MOV_ESTE;
-					break;
-				case 3:
-					ballTo = Entity::MovementTo::MOV_NORESTE;
-					break;
+			else if (state == GameState::GAME_LOSE_SCREEN) {
+				while (window->pollEvent(evt)) {
+					switch (evt.type) {
+					case sf::Event::Closed:
+							window->close();
+							break;
+					}
 				}
-				pongSound.play();
-				entitys["ball"]->SetVelocity(entitys["ball"]->GetVelocity() + 20.0f);
-			}
-			else if (entitys["p2"]->intersects(entitys["ball"])) {
-				int sel = dist(gen);
-				switch (sel) {
-				case 1:
-					ballTo = Entity::MovementTo::MOV_SUROESTE;
-					break;
-				case 2:
-					ballTo = Entity::MovementTo::MOV_OESTE;
-					break;
-				case 3:
-					ballTo = Entity::MovementTo::MOV_NOROESTE;
-					break;
-				}
-				pongSound.play();
-				entitys["ball"]->SetVelocity(entitys["ball"]->GetVelocity() + 20.0f + distF(gen));
-			}
-
-			if ((entitys["ball"]->GetPosition().y + entitys["ball"]->GetSprite().getTexture()->getSize().y / 2) + 1.0f > window->getSize().y || entitys["ball"]->GetPosition().y - 1.0f < 0.0f) {
-				switch (ballTo)
-				{
-				case SCEG::Entity::MovementTo::MOV_NORESTE:
-					ballTo = Entity::MovementTo::MOV_SURESTE;
-					break;
-				case SCEG::Entity::MovementTo::MOV_NOROESTE:
-					ballTo = Entity::MovementTo::MOV_SUROESTE;
-					break;
-				case SCEG::Entity::MovementTo::MOV_SURESTE:
-					ballTo = Entity::MovementTo::MOV_NORESTE;
-					break;
-				case SCEG::Entity::MovementTo::MOV_SUROESTE:
-					ballTo = Entity::MovementTo::MOV_NOROESTE;
-					break;
-				default:
-					break;
-				}
-				pongSound.play();
-			}
-
-			if ((entitys["ball"]->GetPosition().x - entitys["ball"]->GetSprite().getTexture()->getSize().x) + 1.0f > window->getSize().x) {
-				*logger << Logger::LogType::LOG_DEBUG << "Score p1\n";
-				PlayerOneScore++;
-				entitys["ball"]->SetPosition(sf::Vector2f((window->getSize().x / 2) - (ball->GetSprite().getTexture()->getSize().x / 4), (window->getSize().y / 2) - (ball->GetSprite().getTexture()->getSize().y / 4)));
-				entitys["Player"]->SetPosition(sf::Vector2f(0, (window->getSize().y / 2) - (entitys["Player"]->GetSprite().getTexture()->getSize().y / 2)));
-				entitys["p2"]->SetPosition(sf::Vector2f(window->getSize().x - entitys["p2"]->GetSprite().getTexture()->getSize().x, (window->getSize().y / 2) - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2)));
-				entitys["Player"]->SetVelocity(440.0f);
-				entitys["p2"]->SetVelocity(400.0f);
-				entitys["ball"]->SetVelocity(200.0f);
-				std::random_device rd;
-				gen.seed(rd());
-				P1ScoreText.setString(std::to_string(PlayerOneScore));
-				P2ScoreText.setString(std::to_string(PlayerTwoScore));
-			}
-			else if ((entitys["ball"]->GetPosition().x + entitys["ball"]->GetSprite().getTexture()->getSize().x)- 1.0f < 0.0f) {
-				*logger << Logger::LogType::LOG_DEBUG << "Score p2\n";
-				PlayerTwoScore++;
-				entitys["ball"]->SetPosition(sf::Vector2f((window->getSize().x / 2) - (ball->GetSprite().getTexture()->getSize().x / 4), (window->getSize().y / 2) - (ball->GetSprite().getTexture()->getSize().y / 4)));
-				entitys["Player"]->SetPosition(sf::Vector2f(0, (window->getSize().y / 2) - (entitys["Player"]->GetSprite().getTexture()->getSize().y / 2)));
-				entitys["p2"]->SetPosition(sf::Vector2f(window->getSize().x - entitys["p2"]->GetSprite().getTexture()->getSize().x, (window->getSize().y / 2) - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2)));
-				entitys["Player"]->SetVelocity(440.0f);
-				entitys["p2"]->SetVelocity(400.0f);
-				entitys["ball"]->SetVelocity(200.0f);
-				std::random_device rd;
-				gen.seed(rd());
-				P1ScoreText.setString(std::to_string(PlayerOneScore));
-				P2ScoreText.setString(std::to_string(PlayerTwoScore));
-			}
-
-			if (entitys["p2"]->GetPosition().y + (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2) < entitys["ball"]->GetPosition().y) {
-				entitys["p2"]->Move(Entity::MovementTo::MOV_SUR);
-			}
-			else if (entitys["p2"]->GetPosition().y - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2) > entitys["ball"]->GetPosition().y) {
-				entitys["p2"]->Move(Entity::MovementTo::MOV_NORTE);
-			}
-
-			if(PlayerOneScore < 10 || PlayerTwoScore <= 10) {
-				window->clear(sf::Color::Black);
-				window->draw(P1ScoreText);
-				window->draw(P2ScoreText);
-				for (auto it : entitys) {
-					it.second->draw(window);
+				window->clear(sf::Color::Red);
+				if (oofSong.getStatus() != sf::Music::Status::Playing) {
+					oofSong.play();
+					(*logger) << Logger::LogType::LOG_DEBUG << "Playing song oofSong\n";
 				}
 				window->display();
-			} else {
-				window->clear(sf::Color::Red);
-				pongSound.play();
 			}
 		}
 	}

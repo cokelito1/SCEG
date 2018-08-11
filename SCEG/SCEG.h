@@ -15,6 +15,8 @@ class ResourceManager;
 
 class Engine {
 public:
+	enum class GameState {GAME_PLAYING, GAME_LOSE_SCREEN};
+
 	Engine();
 	~Engine();
 
@@ -33,6 +35,8 @@ private:
 	Logger *logger;
 	ResourceManager<sf::Image> *imgMngr;
 	ResourceManager<sf::SoundBuffer> *soundMngr;
+
+	GameState state;
 
 	sf::RenderWindow *window;
 

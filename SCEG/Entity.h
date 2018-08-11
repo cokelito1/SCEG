@@ -30,6 +30,7 @@ public:
 	virtual void Move(MovementTo direction) = 0;
 	virtual void SetPosition(sf::Vector2f Pos) = 0;
 	virtual void RegisterSprite() = 0;
+	virtual void SetMoving(bool moving) { this->moving = moving; }
 	virtual void draw(sf::RenderWindow *window) = 0;
 	virtual bool intersects(Entity *ent) = 0;
 
@@ -47,6 +48,7 @@ protected:
 	std::string EntityName;
 
 	float velocity;
+	bool moving = false;
 
 	Engine *engine;
 	Logger *logger;
