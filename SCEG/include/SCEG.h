@@ -18,10 +18,10 @@ public:
 	enum class GameState {GAME_PLAYING, GAME_LOSE_SCREEN, GAME_SELECT};
 
 	Engine();
-	~Engine();
+	virtual ~Engine();
 
 	void RegisterEntity(const std::string& name, Entity *ent);
-	void run();
+	virtual void run();
 
 	void UnregisterEntity(const std::string& name);
 	void UnregisterEntity(Entity *ent);

@@ -23,6 +23,7 @@ namespace SCEG {
 		window = new sf::RenderWindow(sf::VideoMode(800, 600), "hello");
 		window->setVerticalSyncEnabled(true);
 		window->setIcon(imgMngr->GetResource("ball.png").getSize().x, imgMngr->GetResource("ball.png").getSize().y, imgMngr->GetResource("ball.png").getPixelsPtr());
+		
 		state = GameState::GAME_SELECT;
 
 		(*logger) << Logger::LogType::LOG_INFO << "Engine Iniciado\n";
@@ -32,11 +33,14 @@ namespace SCEG {
 		delete imgMngr;
 		delete soundMngr;
 		delete fontMngr;
+
 		for (auto i : entitys) {
 			(*logger) << Logger::LogType::LOG_DEBUG <<"Entidad de registrada: " << i.second->GetName().c_str() << "\n";
 			delete i.second;
 		}
+
 		delete window;
+
 		(*logger) << Logger::LogType::LOG_INFO << "Engine terminado\n";
 		delete logger;
 	}
@@ -112,9 +116,8 @@ namespace SCEG {
 
 		Player *ball = new Player(this);
 		ball->SetImage(imgMngr->GetResource("ball.png"));
-		ball->GetSprite().scale(0.5f, 0.5f);
+		ball->GetSprite().scale(0.25f, 0.25f);
 		ball->SetName("ball");
-		ball->SetPosition(sf::Vector2f((window->getSize().x / 2) - (ball->GetSprite().getTexture()->getSize().x / 4), (window->getSize().y / 2) - (ball->GetSprite().getTexture()->getSize().y / 4)));
 		ball->SetVelocity(200.0f);
 		ball->SetMoving(true);
 		ball->RegisterSprite();
@@ -129,6 +132,7 @@ namespace SCEG {
 
 		entitys["Player"]->SetPosition(sf::Vector2f(0, (window->getSize().y / 2) - (entitys["Player"]->GetSprite().getTexture()->getSize().y / 2)));
 		entitys["p2"]->SetPosition(sf::Vector2f(window->getSize().x - entitys["p2"]->GetSprite().getTexture()->getSize().x, (window->getSize().y / 2) - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2)));
+		entitys["ball"]->SetPosition(sf::Vector2f((window->getSize().x / 2) - ((ball->GetSprite().getTexture()->getSize().x / 2) * ball->GetSprite().getScale().x), (window->getSize().y / 2) - ((ball->GetSprite().getTexture()->getSize().y / 2) * ball->GetSprite().getScale().y)));
 
 		Entity::MovementTo PjMoveTo = Entity::MovementTo::MOV_SUR;
 		Entity::MovementTo Pj2MoveTo = Entity::MovementTo::MOV_SUR;
@@ -249,7 +253,7 @@ namespace SCEG {
 					entitys["ball"]->SetVelocity(entitys["ball"]->GetVelocity() + 20.0f + distF(gen));
 				}
 
-				if ((entitys["ball"]->GetPosition().y + entitys["ball"]->GetSprite().getTexture()->getSize().y / 2) + 1.0f > window->getSize().y || entitys["ball"]->GetPosition().y - 1.0f < 0.0f) {
+				if ((entitys["ball"]->GetPosition().y + entitys["ball"]->GetSprite().getTexture()->getSize().y * entitys["ball"]->GetSprite().getScale().y) + 1.0f > window->getSize().y || entitys["ball"]->GetPosition().y - 1.0f < 0.0f) {
 					switch (ballTo)
 					{
 					case SCEG::Entity::MovementTo::MOV_NORESTE:
@@ -273,7 +277,7 @@ namespace SCEG {
 				if ((entitys["ball"]->GetPosition().x - entitys["ball"]->GetSprite().getTexture()->getSize().x) + 1.0f > window->getSize().x) {
 					*logger << Logger::LogType::LOG_DEBUG << "Score p1\n";
 					PlayerOneScore++;
-					entitys["ball"]->SetPosition(sf::Vector2f((window->getSize().x / 2) - (ball->GetSprite().getTexture()->getSize().x / 4), (window->getSize().y / 2) - (ball->GetSprite().getTexture()->getSize().y / 4)));
+					entitys["ball"]->SetPosition(sf::Vector2f((window->getSize().x / 2) - ((ball->GetSprite().getTexture()->getSize().x / 2) * ball->GetSprite().getScale().x), (window->getSize().y / 2) - ((ball->GetSprite().getTexture()->getSize().y / 2) * ball->GetSprite().getScale().y)));
 					entitys["Player"]->SetPosition(sf::Vector2f(0, (window->getSize().y / 2) - (entitys["Player"]->GetSprite().getTexture()->getSize().y / 2)));
 					entitys["p2"]->SetPosition(sf::Vector2f(window->getSize().x - entitys["p2"]->GetSprite().getTexture()->getSize().x, (window->getSize().y / 2) - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2)));
 					entitys["Player"]->SetVelocity(440.0f);
@@ -287,7 +291,7 @@ namespace SCEG {
 				else if ((entitys["ball"]->GetPosition().x + entitys["ball"]->GetSprite().getTexture()->getSize().x) - 1.0f < 0.0f) {
 					*logger << Logger::LogType::LOG_DEBUG << "Score p2\n";
 					PlayerTwoScore++;
-					entitys["ball"]->SetPosition(sf::Vector2f((window->getSize().x / 2) - (ball->GetSprite().getTexture()->getSize().x / 4), (window->getSize().y / 2) - (ball->GetSprite().getTexture()->getSize().y / 4)));
+					entitys["ball"]->SetPosition(sf::Vector2f((window->getSize().x / 2) - ((ball->GetSprite().getTexture()->getSize().x / 2) * ball->GetSprite().getScale().x), (window->getSize().y / 2) - ((ball->GetSprite().getTexture()->getSize().y / 2) * ball->GetSprite().getScale().y)));
 					entitys["Player"]->SetPosition(sf::Vector2f(0, (window->getSize().y / 2) - (entitys["Player"]->GetSprite().getTexture()->getSize().y / 2)));
 					entitys["p2"]->SetPosition(sf::Vector2f(window->getSize().x - entitys["p2"]->GetSprite().getTexture()->getSize().x, (window->getSize().y / 2) - (entitys["p2"]->GetSprite().getTexture()->getSize().y / 2)));
 					entitys["Player"]->SetVelocity(440.0f);
