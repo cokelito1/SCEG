@@ -1,5 +1,6 @@
 #pragma once
 
+#include <string>
 #include <fstream>
 
 namespace SCEG {
@@ -13,6 +14,7 @@ public:
 
 	~Logger();
 
+	friend Logger& operator<<(Logger& logger, std::string text);
 	friend Logger& operator<<(Logger& logger, LogType type);
 	friend Logger& operator<<(Logger& logger, const char *text);
 	friend Logger& operator<<(Logger& logger, float num);

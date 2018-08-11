@@ -2,12 +2,16 @@
 
 #include <map>
 
-#include "ImageManager.h"
+#include <SFML/Audio.hpp>
+#include <SFML/Graphics.hpp>
+
 #include "Logger.h"
 
 namespace SCEG {
 
-	class Entity;
+class Entity;
+template<class T>
+class ResourceManager;
 
 class Engine {
 public:
@@ -23,11 +27,12 @@ public:
 	float GetDelta();
 
 	Logger* GetLogger() const;
-	ImageManager* GetImageManager() const;
+	ResourceManager<sf::Image>* GetImageManager() const;
 	sf::RenderWindow* GetRenderWindow() const;
 private:
 	Logger *logger;
-	ImageManager *imgMngr;
+	ResourceManager<sf::Image> *imgMngr;
+	ResourceManager<sf::SoundBuffer> *soundMngr;
 
 	sf::RenderWindow *window;
 

@@ -2,6 +2,7 @@
 
 #include "SCEG.h"
 #include "Player.h"
+#include "ResourceManager.h"
 
 #include <SFML/Audio.hpp>
 
@@ -10,7 +11,8 @@
 namespace SCEG {
 	Engine::Engine() {
 		logger = new Logger("0.0.1");
-		imgMngr = new ImageManager(this);
+		imgMngr = new ResourceManager<sf::Image>(this);
+		soundMngr = new ResourceManager<sf::SoundBuffer>(this);
 		window = new sf::RenderWindow(sf::VideoMode(800, 600), "hello");
 		window->setVerticalSyncEnabled(true);
 
@@ -19,7 +21,7 @@ namespace SCEG {
 
 	Engine::~Engine() {
 		delete imgMngr;
-
+		delete soundMngr;
 		for (auto i : entitys) {
 			(*logger) << Logger::LogType::LOG_DEBUG <<"Entidad de registrada: " << i.second->GetName().c_str() << "\n";
 			delete i.second;
@@ -67,10 +69,7 @@ namespace SCEG {
 		sf::Text P2ScoreText;
 
 		sf::Sound pongSound;
-		sf::SoundBuffer pongSoundBuffer;
-
-		pongSoundBuffer.loadFromFile("pong.wav");
-		pongSound.setBuffer(pongSoundBuffer);
+		pongSound.setBuffer(soundMngr->GetResource("pong.wav"));
 
 		P1ScoreText.setFont(font);
 		P2ScoreText.setFont(font);
@@ -85,21 +84,21 @@ namespace SCEG {
 		P2ScoreText.setString(std::to_string(PlayerTwoScore));
 
 		Player *p1 = new Player(this);
-		p1->SetImage(imgMngr->GetImage("rectangle.png"));
+		p1->SetImage(imgMngr->GetResource("rectangle.png"));
 		p1->SetPosition(sf::Vector2f(0.0f, 0.0f));
 		p1->SetVelocity(440.0f);
 		p1->SetName("Player");
 		p1->RegisterSprite();
 
 		Player *p2 = new Player(this);
-		p2->SetImage(imgMngr->GetImage("rectangle.png"));
+		p2->SetImage(imgMngr->GetResource("rectangle.png"));
 		p2->SetPosition(sf::Vector2f(window->getSize().x - p2->GetSprite().getTexture()->getSize().x, 0.0f));
 		p2->SetName("p2");
 		p2->SetVelocity(400.0f);
 		p2->RegisterSprite();
 
 		Player *ball = new Player(this);
-		ball->SetImage(imgMngr->GetImage("ball.png"));
+		ball->SetImage(imgMngr->GetResource("ball.png"));
 		ball->GetSprite().scale(0.5f, 0.5f);
 		ball->SetName("ball");
 		ball->SetPosition(sf::Vector2f((window->getSize().x / 2) - (ball->GetSprite().getTexture()->getSize().x / 4), (window->getSize().y / 2) - (ball->GetSprite().getTexture()->getSize().y / 4)));
@@ -253,7 +252,7 @@ namespace SCEG {
 		return logger;
 	}
 
-	ImageManager* Engine::GetImageManager() const {
+	ResourceManager<sf::Image>* Engine::GetImageManager() const {
 		return imgMngr;
 	}
 

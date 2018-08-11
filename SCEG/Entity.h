@@ -5,7 +5,7 @@
 #include <SFML/Graphics.hpp>
 
 #include "SCEG.h"
-#include "ImageManager.h"
+#include "ResourceManager.h"
 #include "Logger.h"
 
 namespace SCEG {
@@ -50,6 +50,6 @@ protected:
 
 	Engine *engine;
 	Logger *logger;
-	ImageManager *imgMngr;
+	ResourceManager<sf::Image> *imgMngr;
 };
 }

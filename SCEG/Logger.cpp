@@ -89,4 +89,12 @@ namespace SCEG {
 #endif
 		return logger;
 	}
+
+	Logger& operator<<(Logger& logger, std::string text) {
+		logger.LogFile << text;
+#ifdef LOGGER_TO_STDOUT
+		std::cout << text;
+#endif // LOGGER_TO_STDOUT
+		return logger;
+	}
 }
